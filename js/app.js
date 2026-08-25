@@ -117,9 +117,29 @@
       RH.promptPWAInstall();
       return;
     }
+    if ((el = e.target.closest('[data-open-bookings-modal]'))) {
+      e.preventDefault();
+      RH.openBookingsModal();
+      return;
+    }
     if ((el = e.target.closest('[data-notifications]'))) {
       e.preventDefault();
       RH.openNotificationsModal();
+      return;
+    }
+    if ((el = e.target.closest('[data-pwd-toggle]'))) {
+      e.preventDefault();
+      var targetId = el.getAttribute('data-pwd-toggle');
+      var wrap = el.closest('.input-wrap');
+      var input = targetId ? document.getElementById(targetId) : (wrap ? wrap.querySelector('input') : null);
+      if (input) {
+        var isPassword = input.getAttribute('type') === 'password';
+        input.setAttribute('type', isPassword ? 'text' : 'password');
+        el.classList.toggle('is-active', isPassword);
+        el.setAttribute('aria-label', isPassword ? 'Hide password' : 'Show password');
+        el.setAttribute('title', isPassword ? 'Hide password' : 'Show password');
+        el.innerHTML = RH.icon(isPassword ? 'eye-off' : 'eye', 'icon-sm');
+      }
       return;
     }
 

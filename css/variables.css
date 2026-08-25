@@ -1,73 +1,85 @@
 /* ============================================================
    ReserveHub Prototype — Design Tokens
+   Modern, Polished, High-End Hospitality Design System
    ============================================================ */
-@font-face {
-  font-family: 'ReserveHub Sans';
-  src: local('Segoe UI'), local('Roboto'), local('Helvetica Neue'), local('Arial');
-  font-display: swap;
-}
 
 :root {
-  /* Brand palette (mirrors the React ReserveHub design system) */
+  /* Brand palette */
   --burgundy: #7A1F2B;
-  --burgundy-hover: #962635;
+  --burgundy-hover: #8F2433;
   --burgundy-dark: #5C141E;
-  --burgundy-deep: #1F0B10;
+  --burgundy-deep: #1A0D10;
   --burgundy-mid: #4A121A;
-  --gold: #D4A373;
-  --gold-dark: #C29160;
-  --cream: #FAF7F2;
+  --gold: #C59B6D;
+  --gold-light: #F4E8D8;
+  --gold-dark: #A87D50;
+  --cream: #FAF8F5;
+  --cream-soft: #F4EFEA;
   --white: #FFFFFF;
-  --ink: #2D2D2D;
-  --ink-deep: #1E1513;
-  --charcoal: #160E0B;
+  --ink: #1A1514;
+  --ink-deep: #100B09;
+  --charcoal: #140E0C;
 
-  /* Derived alphas */
-  --line: rgba(212, 163, 115, 0.30);
-  --line-strong: rgba(212, 163, 115, 0.45);
-  --line-soft: rgba(212, 163, 115, 0.20);
-  --ink-60: rgba(45, 45, 45, 0.75);
-  --ink-40: rgba(45, 45, 45, 0.55);
-  --glass: rgba(255, 255, 255, 0.10);
+  /* Derived alphas & borders */
+  --line: rgba(31, 25, 23, 0.08);
+  --line-strong: rgba(197, 155, 109, 0.35);
+  --line-soft: rgba(31, 25, 23, 0.05);
+  --border-card: rgba(31, 25, 23, 0.08);
+  --border-gold: rgba(197, 155, 109, 0.3);
+  --ink-60: rgba(26, 21, 20, 0.7);
+  --ink-40: rgba(26, 21, 20, 0.5);
+  --glass: rgba(255, 255, 255, 0.12);
 
   /* Semantic */
   --text-body: var(--ink);
-  --text-muted: #6B5E57;
-  --text-faint: #94A3B8;
+  --text-muted: #665C57;
+  --text-faint: #8E837D;
   --success: #059669;
   --warning: #D97706;
   --danger: #E11D48;
 
-  /* Typography */
-  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-    'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
-  --fs-micro: 10px;
-  --fs-tiny: 11px;
-  --fs-small: 12px;
-  --fs-base: 14px;
-  --fs-md: 15px;
-  --fs-lg: 17px;
-  --fs-xl: 20px;
-  --fs-2xl: 24px;
-  --fs-3xl: 30px;
+  /* Modern High-End Typography System */
+  --font-heading: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'SF Mono', Menlo, Monaco, Consolas, monospace;
 
-  /* Radius */
+  /* Aliases for backwards compatibility */
+  --font-serif: var(--font-sans);
+  --font-cinzel: var(--font-sans);
+  --font-italiana: var(--font-heading);
+
+  /* Typography Scales */
+  --fs-micro: 11px;
+  --fs-tiny: 12px;
+  --fs-small: 13px;
+  --fs-base: 14.5px;
+  --fs-md: 16px;
+  --fs-lg: 18px;
+  --fs-xl: 21px;
+  --fs-2xl: 26px;
+  --fs-3xl: 32px;
+  --fs-hero: clamp(28px, 4vw, 42px);
+
+  /* Refined Radius */
   --r-sm: 8px;
   --r-md: 12px;
   --r-lg: 16px;
   --r-xl: 20px;
   --r-2xl: 24px;
-  --r-pill: 999px;
+  --r-pill: 9999px;
 
-  /* Shadows */
-  --shadow-xs: 0 1px 2px rgba(31, 11, 16, 0.06);
-  --shadow-sm: 0 2px 8px rgba(31, 11, 16, 0.08);
-  --shadow-md: 0 8px 24px rgba(31, 11, 16, 0.12);
-  --shadow-xl: 0 18px 48px rgba(31, 11, 16, 0.22);
+  /* Modern Subtle Soft Shadows */
+  --shadow-xs: 0 1px 2px rgba(26, 20, 18, 0.04);
+  --shadow-sm: 0 2px 6px rgba(26, 20, 18, 0.05), 0 1px 2px rgba(26, 20, 18, 0.03);
+  --shadow-md: 0 6px 18px rgba(26, 20, 18, 0.07), 0 2px 6px rgba(26, 20, 18, 0.03);
+  --shadow-lg: 0 12px 30px rgba(26, 20, 18, 0.09), 0 4px 10px rgba(26, 20, 18, 0.03);
+  --shadow-xl: 0 20px 40px rgba(26, 20, 18, 0.12), 0 8px 20px rgba(26, 20, 18, 0.05);
 
   /* Layout & Viewport */
   --container: 1280px;
-  --header-h: 64px;
+  --header-h: 68px;
   --tabs-h: 60px;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-top: env(safe-area-inset-top, 0px);
@@ -75,8 +87,9 @@
   --safe-right: env(safe-area-inset-right, 0px);
   --min-touch-target: 44px;
 
-  /* Motion */
-  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
-  --t-fast: 140ms var(--ease);
-  --t-med: 260ms var(--ease);
+  /* Motion & Micro-interactions */
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --t-fast: 160ms var(--ease);
+  --t-med: 280ms var(--ease);
+  --t-slow: 400ms var(--ease);
 }

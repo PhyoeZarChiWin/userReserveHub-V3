@@ -28,7 +28,9 @@ const ASSETS_TO_CACHE = [
   './js/u07-booking-complete.js',
   './js/u08-mypage.js',
   './js/u09-booking-detail.js',
-  './js/u10-profile.js',
+  './js/u10-login.js',
+  './js/u11-register.js',
+  './js/u20-account-settings.js',
   './js/app.js'
 ];
 

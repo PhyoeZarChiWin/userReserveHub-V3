@@ -20,16 +20,38 @@ body {
   background: var(--cream);
   color: var(--text-body);
   font-family: var(--font-sans);
+  font-weight: 400;
   font-size: var(--fs-base);
-  line-height: 1.45;
+  line-height: 1.5;
   padding-left: var(--safe-left);
   padding-right: var(--safe-right);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 img, svg { display: inline-block; vertical-align: middle; max-width: 100%; }
 img { max-width: 100%; height: auto; }
 button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; touch-action: manipulation; }
 input, select, textarea { font: inherit; color: inherit; touch-action: manipulation; }
-h1, h2, h3, h4 { margin: 0; color: var(--ink); letter-spacing: -0.01em; }
+h1, h2, h3, h4 {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--font-heading);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+h1 { font-size: var(--fs-hero); font-weight: 800; letter-spacing: -0.025em; line-height: 1.15; }
+h2 { font-size: var(--fs-3xl); font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; }
+h3 { font-size: var(--fs-2xl); font-weight: 600; letter-spacing: -0.015em; line-height: 1.25; }
+h4 { font-size: var(--fs-xl); font-weight: 600; letter-spacing: -0.01em; line-height: 1.3; }
+
+.font-heading { font-family: var(--font-heading) !important; }
+.font-display { font-family: var(--font-heading) !important; }
+.font-serif { font-family: var(--font-sans) !important; }
+.font-cinzel { font-family: var(--font-sans) !important; }
+.font-italiana { font-family: var(--font-heading) !important; }
+.font-sans { font-family: var(--font-sans) !important; }
+.italic-flair { font-style: normal; font-weight: 600; }
 p { margin: 0; }
 ul { margin: 0; padding: 0; list-style: none; }
 a { color: inherit; text-decoration: none; }

@@ -76,11 +76,14 @@
         '</button></div>' +
         '<nav class="nav-links">' +
           link('Explore', 'U02', 'compass', 0) +
-          link('My Bookings', 'U08', 'calendar', bookingsCount) +
+          '<button class="nav-link" data-open-bookings-modal title="Concierge Table Manager">' +
+            RH.icon('calendar', 'icon') + '<span>My Bookings</span>' +
+            (bookingsCount > 0 ? '<span class="nav-count">' + bookingsCount + '</span>' : '') +
+          '</button>' +
           '<button class="icon-btn" data-notifications title="Notifications" aria-label="Notifications">' +
             RH.icon('bell', 'icon-lg') + (unreadNotifications > 0 ? '<span class="nav-count">' + unreadNotifications + '</span>' : '') +
           '</button>' +
-          '<button class="profile-chip' + (view === 'U10' ? ' is-active' : '') + '" data-nav="U10">' +
+          '<button class="profile-chip' + (view === 'U08' || view === 'U10' ? ' is-active' : '') + '" data-nav="U08">' +
             '<span class="avatar-circle">P</span> Phyo Win' +
           '</button>' +
         '</nav>' +
@@ -115,8 +118,7 @@
       '<div class="tabs-inner">' +
         tab('U01', 'Home', 'home', 0) +
         tab('U02', 'Explore', 'compass', 0, view === 'U03' || view === 'U04' || view === 'U05' || view === 'U06' || view === 'U07') +
-        tab('U08', 'Bookings', 'calendar', bookingsCount > 0 ? bookingsCount : null, view === 'U09') +
-        tab('U10', 'Profile', 'user', 0) +
+        tab('U08', 'My Page', 'user', bookingsCount > 0 ? bookingsCount : null, view === 'U08' || view === 'U09' || view === 'U10') +
       '</div>';
   };
 
@@ -140,7 +142,7 @@
           '</ul></div>' +
           '<div class="footer-col"><h3>Reservations</h3><ul>' +
             '<li><button data-nav="U08">My Active Bookings</button></li>' +
-            '<li><button data-nav="U10">Member Profile</button></li>' +
+            '<li><button data-nav="U10">Member Login</button></li>' +
             '<li><span style="color:#94A3B8;cursor:default;">Venue Partner Portal</span></li>' +
           '</ul></div>' +
           '<div class="footer-col"><h3>Concierge</h3><div class="footer-contact">' +

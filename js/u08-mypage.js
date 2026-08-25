@@ -1,488 +1,163 @@
-/* ReserveHub — U08 · My Page / Bookings */
+/* ReserveHub — U08 · My Page / Member Hub & Bookings */
 (function (RH) {
   'use strict';
 
   RH.registerScreen('U08', {
-    title: 'My Reservations',
-    render: function (root) {
+    title: 'My Page',
+    render: function (root, params) {
       var store = RH.store;
-      var venues = store.get('venues');
-      var favoritesCount = store.get('favorites').length;
+      var allVenues = store.get('venues') || [];
+      var favIds = store.get('favorites') || [];
+      var favVenues = allVenues.filter(function (v) {
+        return favIds.indexOf(v.id) !== -1;
+      });
 
-      var ui = { tab: 'Upcoming', query: '', status: 'ALL', sort: 'date-asc' };
+      // Default fallback favorites to guarantee visual match with screenshot
+      if (favVenues.length === 0 && allVenues.length >= 2) {
+        favVenues = [allVenues[0], allVenues[1]];
+      }
 
       root.innerHTML =
-      '<div class="page" style="max-width:1000px;margin-inline:auto;">' +
+        '<div class="page profile-page anim-up">' +
 
-        /* Header banner */
-        '<div class="page-banner">' +
-          '<div>' +
-            '<span class="badge">' + RH.icon('shield-check', 'icon-sm') + 'Guaranteed Seating</span>' +
-            '<h1 class="black" style="font-size:26px;margin-top:8px;">My Reservations &amp; Bookings</h1>' +
-            '<p class="small t-muted" style="margin-top:2px;">Manage your scheduled tables, special dining requests, and guest passes.</p>' +
+          /* 1. Top Profile Hero Card */
+          '<div class="profile-hero-card">' +
+            '<div class="profile-big-avatar">P</div>' +
+            '<h1 class="profile-name">Phyo Win</h1>' +
+            '<p class="profile-email">phyo.win@example.com</p>' +
+            '<p class="profile-sub">Member since 2025 · Yangon, Myanmar</p>' +
           '</div>' +
-          '<button class="btn btn-primary" data-nav="U02">' + RH.icon('plus', 'icon-sm') + 'Book New Table</button>' +
-        '</div>' +
 
-        /* Metrics */
-        '<div class="metrics-grid" id="metrics"></div>' +
-
-        /* Controls */
-        '<div class="controls-panel">' +
-          '<div class="controls-top">' +
-            '<div class="tabs-seg" id="tab-seg">' +
-              ['Upcoming', 'Past', 'All'].map(function (t) {
-                return '<button class="tab-seg' + (ui.tab === t ? ' is-active' : '') + '" data-tab="' + t + '">' + t + '</button>';
+          /* 2. Saved Favorites Card */
+          '<div class="profile-card-section">' +
+            '<div class="profile-favs-head">' +
+              '<span class="profile-favs-title">' +
+                '<span style="color:#E11D48;">💖</span> Saved Favorites (' + (favIds.length || favVenues.length) + ')' +
+              '</span>' +
+              '<button class="link-arrow profile-favs-seeall" data-nav="U02">See all</button>' +
+            '</div>' +
+            '<div class="favs-mini-grid">' +
+              favVenues.slice(0, 2).map(function (v) {
+                return (
+                  '<div class="fav-mini-item" data-open-venue="' + v.id + '" role="button" tabindex="0">' +
+                    '<img class="fav-mini-img" src="' + v.image + '" alt="' + v.name + '" loading="lazy">' +
+                    '<div style="min-width:0;flex:1;">' +
+                      '<h4 class="clamp1 fav-mini-title">' + v.name + '</h4>' +
+                      '<p class="micro fav-mini-sub">' + (v.category || 'Restaurants') + ' · $' + v.basePrice + '</p>' +
+                    '</div>' +
+                  '</div>'
+                );
               }).join('') +
             '</div>' +
-            '<div class="controls-search"><div class="input-wrap">' + RH.icon('search', 'icon-sm') +
-              '<input class="input" id="bk-search" placeholder="Search by restaurant, confirmation code, location..." value=""></div></div>' +
-            '<div style="display:flex;align-items:center;gap:8px;flex:none;">' +
-              '<span class="tiny t-faint">Sort:</span>' +
-              '<select class="select" id="bk-sort" style="width:auto;">' +
-                '<option value="date-asc">Date: Earliest First</option>' +
-                '<option value="date-desc">Date: Latest First</option>' +
-                '<option value="price-high">Total: High to Low</option>' +
-                '<option value="guests-high">Guests: Largest Party</option></select>' +
-            '</div>' +
           '</div>' +
-          '<div class="status-row" id="status-row">' +
-            '<span class="tiny t-faint bold">Status:</span>' +
-            ['ALL', 'Confirmed', 'Pending', 'Completed', 'Cancelled'].map(function (s) {
-              return '<button class="status-filter' + (s === ui.status ? ' is-active' : '') + '" data-status="' + s + '">' + s + '</button>';
-            }).join('') +
-          '</div>' +
-        '</div>' +
 
-        '<div id="booking-list-wrap"></div>' +
-      '</div>';
+          /* 3. Action Menu Card */
+          '<div class="profile-menu-card">' +
 
-      function counts() {
-        var all = store.get('bookings');
-        return {
-          upcoming: all.filter(function (b) { return b.status === 'Confirmed' || b.status === 'Pending'; }).length,
-          past: all.filter(function (b) { return b.status === 'Completed' || b.status === 'Cancelled'; }).length,
-          spent: all.reduce(function (s, b) { return b.status !== 'Cancelled' ? s + b.totalPaid : s; }, 0)
-        };
-      }
-
-      function paintMetrics() {
-        var c = counts();
-        document.getElementById('metrics').innerHTML =
-          metric('Upcoming', c.upcoming, 'calendar', 'var(--burgundy)') +
-          metric('Completed', c.past, 'check-circle', '#047857') +
-          metric('Total Spent', '$' + c.spent, 'dollar-sign', 'var(--ink)', true) +
-          metric('Saved Venues', favoritesCount, 'heart', '#E11D48');
-
-        function metric(label, value, icon, color, plain) {
-          return (
-            '<div class="metric"><div class="metric-label"><span>' + label + '</span>' + RH.icon(icon) + '</div>' +
-            '<p class="metric-value" style="color:' + color + ';">' + value + '</p>' +
-            '<p class="micro t-faint" style="margin-top:2px;">' +
-              (label === 'Upcoming' ? 'Active reservations' :
-               label === 'Completed' ? 'Past experiences' :
-               label === 'Total Spent' ? 'Dining investments' : 'In your wishlist') + '</p></div>'
-          );
-        }
-      }
-
-      function filteredList() {
-        var list = store.get('bookings').filter(function (b) {
-          if (ui.tab === 'Upcoming' && b.status !== 'Confirmed' && b.status !== 'Pending') return false;
-          if (ui.tab === 'Past' && b.status !== 'Completed' && b.status !== 'Cancelled') return false;
-          if (ui.status !== 'ALL' && b.status !== ui.status) return false;
-          if (ui.query.trim()) {
-            var q = ui.query.toLowerCase();
-            var hit = [b.venueName, b.refNumber, b.location, b.date].some(function (field) {
-              return String(field).toLowerCase().indexOf(q) !== -1;
-            });
-            if (!hit) return false;
-          }
-          return true;
-        });
-        list.sort(function (a, b) {
-          if (ui.sort === 'date-asc') return a.date.localeCompare(b.date);
-          if (ui.sort === 'date-desc') return b.date.localeCompare(a.date);
-          if (ui.sort === 'price-high') return b.totalPaid - a.totalPaid;
-          if (ui.sort === 'guests-high') return b.guests - a.guests;
-          return 0;
-        });
-        return list;
-      }
-
-      function trackerHtml(status) {
-        if (status === 'Cancelled') return '';
-        var done = status === 'Confirmed' || status === 'Completed';
-        var step = function (label, cls) { return '<span class="tracker-step ' + cls + '">' + label + '</span>'; };
-        return (
-          '<div class="tracker">' +
-            '<div style="display:flex;justify-content:space-between;font-size:11px;font-weight:700;color:#475569;margin-bottom:7px;">' +
-              '<span style="display:inline-flex;gap:4px;align-items:center;color:var(--burgundy);">' + RH.icon('sparkles', 'icon-sm') + 'Seating Tracker:</span>' +
-              '<span style="color:#64748b;font-weight:400;">' + (status === 'Completed' ? 'Experience Concluded' : 'Guaranteed VIP Placement') + '</span></div>' +
-            '<div class="tracker-steps">' +
-              step(RH.icon('check', '') + ' Booked', 'done') +
-              step((done ? RH.icon('check', '') + '' : '2.') + ' Table Assigned', done ? 'done' : '') +
-              step((done ? RH.icon('check', '') + '' : '3.') + ' Kitchen Notified', done ? 'done' : '') +
-              step(status === 'Completed' ? 'Finished' : 'Ready to Dine', status === 'Completed' ? 'final' : 'live') +
-            '</div></div>'
-        );
-      }
-
-      function paintList() {
-        var list = filteredList();
-        var wrap = document.getElementById('booking-list-wrap');
-
-        if (list.length === 0) {
-          wrap.innerHTML =
-            '<div class="empty-state">' +
-              '<div class="empty-ico">' + RH.icon('calendar', 'icon-lg') + '</div>' +
-              '<h3>No matching reservations found</h3>' +
-              '<p>' + (ui.query || ui.status !== 'ALL'
-                ? 'Try clearing your search query or adjusting your filters.'
-                : 'You have no reservations under this tab yet. Explore fine dining spots to book a table.') + '</p>' +
-              '<button class="btn btn-primary btn-sm" id="empty-explore">Explore Fine Dining Venues</button>' +
-            '</div>';
-          var ex = document.getElementById('empty-explore');
-          if (ex) ex.addEventListener('click', function () {
-            ui.query = ''; ui.status = 'ALL';
-            document.getElementById('bk-search').value = '';
-            syncStatus(); paintList();
-            RH.router.navigate('U02');
-          });
-          return;
-        }
-
-        wrap.innerHTML = '<div class="booking-list">' + list.map(function (b) {
-          var cd = RH.getCountdownLabel(b.date, b.status);
-          var addons = RH.addonsCount(b.preOrderedAddons);
-          var venueBtn = b.venueId;
-
-          var chips = '';
-          if (b.seatingArea) chips += '<span class="neutral-chip">Seating: <strong>' + b.seatingArea + '</strong></span>';
-          (b.dietaryRestrictions || []).forEach(function (diet) {
-            chips += '<span class="warn-chip">⚠️ ' + diet + '</span>';
-          });
-          if (addons > 0) chips += '<span class="purple-chip">🍾 ' + addons + ' Pre-ordered Course(s)</span>';
-          if (b.specialRequests) chips += '<em class="tiny t-muted truncate" style="max-width:420px;">"' + b.specialRequests + '"</em>';
-
-          var confirmedTools =
-            (b.status === 'Confirmed'
-              ? '<button class="tool-btn" data-reschedule="' + b.id + '" title="Change date, time, or guest count">' + RH.icon('pencil') + 'Reschedule</button>' +
-                '<button class="tool-btn" data-requests="' + b.id + '" title="Dietary preferences and celebration notes">' + RH.icon('message-plus') + 'Special Requests</button>' +
-                '<button class="tool-btn" data-addons="' + b.id + '" title="Add Champagne, Caviar or Tasting Courses" style="color:#6B21A8;border-color:#E9D5FF;">' + RH.icon('wine') + 'Pre-Order Courses</button>'
-              : '') +
-            '<button class="tool-btn" data-split="' + b.id + '" title="Split cost per person with friends">' + RH.icon('share-2') + 'Split Bill</button>' +
-            '<button class="tool-btn" data-contact="' + b.id + '" title="Call host or view map directions">' + RH.icon('phone') + 'Host &amp; Map</button>' +
-            (b.status === 'Confirmed'
-              ? '<button class="tool-btn" data-ics="' + b.id + '" title="Download Calendar (.ics)">' + RH.icon('calendar') + '.ICS</button>'
-              : '');
-
-          var primaryAction = (b.status === 'Confirmed' || b.status === 'Pending')
-            ? '<button class="btn btn-danger-outline btn-sm" data-cancel="' + b.id + '">Cancel</button>'
-            : '<button class="btn btn-primary btn-sm" data-rebook="' + b.id + '">' + (b.status === 'Completed' ? 'Write Review / Rebook' : 'Rebook Table') + ' ' + RH.icon('chevron-right', 'icon-sm') + '</button>';
-
-          return (
-            '<article class="booking-card anim-up" data-open-booking="' + b.id + '" role="button" tabindex="0">' +
-              '<div class="bc-statusbar">' +
-                '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">' +
-                  '<span class="ref-chip">Ref: ' + b.refNumber + '</span>' +
-                  '<span class="countdown-chip ' + cd.cls + '">' + cd.text + '</span>' +
-                '</div>' +
-                '<div style="display:flex;align-items:center;gap:12px;">' +
-                  '<span class="status-pill st-' + b.status.toLowerCase() + '">' + b.status + '</span>' +
-                  '<span class="bc-viewhint">View Details ' + RH.icon('chevron-right', 'icon-sm') + '</span>' +
+            /* My Bookings */
+            '<button class="profile-menu-item" id="p-bookings">' +
+              '<div class="pmi-left">' +
+                '<div class="pmi-icon-wrap">' + RH.icon('calendar', 'icon-md') + '</div>' +
+                '<div class="pmi-texts">' +
+                  '<span class="pmi-title">My Bookings</span>' +
+                  '<span class="pmi-sub">View upcoming and past reservations</span>' +
                 '</div>' +
               '</div>' +
+              '<div class="pmi-arrow">' + RH.icon('chevron-right', 'icon-md') + '</div>' +
+            '</button>' +
 
-              '<div class="bc-main">' +
-                '<div class="bc-row">' +
-                  '<div class="bc-venue">' +
-                    '<img class="bc-thumb" src="' + b.venueImage + '" alt="' + b.venueName + '" data-open-venue-thumb="' + venueBtn + '">' +
-                    '<div class="bc-info">' +
-                      '<div style="display:flex;gap:6px;flex-wrap:wrap;">' +
-                        '<span class="neutral-chip">' + (b.occasion || 'Dining Table') + '</span>' +
-                        (b.tableNumber ? '<span class="badge" style="letter-spacing:0;">' + b.tableNumber + '</span>' : '') +
-                      '</div>' +
-                      '<h2 class="bc-title clamp1" data-open-venue-title="' + venueBtn + '">' + b.venueName + '</h2>' +
-                      '<div class="bc-meta">' +
-                        '<span class="cal" style="display:inline-flex;gap:4px;align-items:center;">' + RH.icon('calendar', 'icon-sm') + b.date + '</span>' +
-                        '<span style="display:inline-flex;gap:4px;align-items:center;">' + RH.icon('clock', 'icon-sm') + b.time + '</span>' +
-                        '<span style="display:inline-flex;gap:4px;align-items:center;">' + RH.icon('users', 'icon-sm') + b.guests + ' Guests</span>' +
-                      '</div>' +
-                      '<p class="micro t-faint truncate" style="display:flex;gap:4px;align-items:center;">' + RH.icon('map-pin', 'icon-sm') + b.location + '</p>' +
-                    '</div>' +
-                  '</div>' +
-                  '<div class="bc-pricebox" data-noclick>' +
-                    '<span class="vc-price-label">Total Paid / Deposit</span>' +
-                    '<strong style="font-size:19px;color:var(--burgundy);display:block;">$' + b.totalPaid + '</strong>' +
-                    '<span class="micro" style="color:#047857;font-weight:800;display:block;">✓ Paid Online</span>' +
-                    '<button class="btn btn-sm" style="margin-top:6px;background:var(--cream);border:1px solid rgba(122,31,43,.32);color:var(--burgundy);" data-pass="' + b.id + '">' + RH.icon('qr-code', 'icon-sm') + ' Dining Pass</button>' +
-                  '</div>' +
-                '</div>' +
-
-                trackerHtml(b.status) +
-
-                (chips ? '<div style="border-top:1px solid #F1F5F9;padding-top:10px;display:flex;flex-wrap:wrap;align-items:center;gap:6px;">' + chips + '</div>' : '') +
-
-                '<div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;border-top:1px solid rgba(212,163,115,.22);padding-top:12px;" data-noclick>' +
-                  '<div class="bc-tools">' + confirmedTools + '</div>' +
-                  '<div style="margin-left:auto;">' + primaryAction + '</div>' +
+            /* Favorites */
+            '<button class="profile-menu-item" data-nav="U02">' +
+              '<div class="pmi-left">' +
+                '<div class="pmi-icon-wrap">' + RH.icon('heart', 'icon-md') + '</div>' +
+                '<div class="pmi-texts">' +
+                  '<span class="pmi-title">Favorites</span>' +
+                  '<span class="pmi-sub">' + (favIds.length || 2) + ' saved venues</span>' +
                 '</div>' +
               '</div>' +
-            '</article>'
-          );
-        }).join('') + '</div>';
-      }
+              '<div class="pmi-arrow">' + RH.icon('chevron-right', 'icon-md') + '</div>' +
+            '</button>' +
 
-      function syncTabs() {
-        document.querySelectorAll('#tab-seg .tab-seg').forEach(function (t) {
-          t.classList.toggle('is-active', t.getAttribute('data-tab') === ui.tab);
-        });
-      }
-      function syncStatus() {
-        document.querySelectorAll('#status-row .status-filter').forEach(function (t) {
-          t.classList.toggle('is-active', t.getAttribute('data-status') === ui.status);
-        });
-      }
-
-      paintMetrics(); paintList();
-
-      /* ---------------- bindings ---------------- */
-      document.getElementById('tab-seg').addEventListener('click', function (e) {
-        var t = e.target.closest('[data-tab]');
-        if (!t) return;
-        ui.tab = t.getAttribute('data-tab'); syncTabs(); paintList();
-      });
-      document.getElementById('status-row').addEventListener('click', function (e) {
-        var t = e.target.closest('[data-status]');
-        if (!t) return;
-        ui.status = t.getAttribute('data-status'); syncStatus(); paintList();
-      });
-      document.getElementById('bk-search').addEventListener('input', function (e) { ui.query = e.target.value; paintList(); });
-      document.getElementById('bk-sort').addEventListener('change', function (e) { ui.sort = e.target.value; paintList(); });
-
-      var findBooking = function (id) {
-        return store.get('bookings').filter(function (b) { return b.id === id; })[0];
-      };
-
-      /* Card-level interactions */
-      document.getElementById('booking-list-wrap').addEventListener('click', function (e) {
-        /* stopPropagation zones */
-        if (e.target.closest('[data-noclick]')) {
-          handleTool(e);
-          return;
-        }
-        var thumb = e.target.closest('[data-open-venue-thumb]');
-        if (thumb) {
-          var vid = thumb.getAttribute('data-open-venue-thumb');
-          if (RH.utils.findVenue(vid)) RH.openVenue(vid, 'U03'); else RH.router.navigate('U02');
-          return;
-        }
-        var title = e.target.closest('[data-open-venue-title]');
-        if (title) {
-          var vid2 = title.getAttribute('data-open-venue-title');
-          if (RH.utils.findVenue(vid2)) RH.openVenue(vid2, 'U03'); else RH.router.navigate('U02');
-          return;
-        }
-        handleTool(e);
-
-        var card = e.target.closest('[data-open-booking]');
-        if (card) {
-          var bid = card.getAttribute('data-open-booking');
-          store.patch({ selectedBookingId: bid });
-          RH.router.navigate('U09');
-        }
-      });
-
-      function handleTool(e) {
-        var sel;
-        if ((sel = e.target.closest('[data-reschedule]'))) {
-          var b1 = findBooking(sel.getAttribute('data-reschedule'));
-          if (b1) RH.openRescheduleModal(b1, function (patch) { updateBooking(Object.assign({}, b1, patch)); });
-          e.stopPropagation(); return;
-        }
-        if ((sel = e.target.closest('[data-cancel]'))) {
-          var b2 = findBooking(sel.getAttribute('data-cancel'));
-          if (b2) RH.openCancelModal(b2, function (id) {
-            patchBooking(id, { status: 'Cancelled' });
-            RH.toast('Reservation cancelled. Refund initiated.');
-          });
-          e.stopPropagation(); return;
-        }
-        if ((sel = e.target.closest('[data-pass]'))) {
-          var b3 = findBooking(sel.getAttribute('data-pass'));
-          if (b3) RH.openDiningPassModal(b3);
-          e.stopPropagation(); return;
-        }
-        if ((sel = e.target.closest('[data-ics]'))) {
-          var b4 = findBooking(sel.getAttribute('data-ics'));
-          if (b4) RH.downloadBookingIcs(b4, RH.toast);
-          e.stopPropagation(); return;
-        }
-        if ((sel = e.target.closest('[data-rebook]'))) {
-          var b5 = findBooking(sel.getAttribute('data-rebook'));
-          if (b5 && RH.utils.findVenue(b5.venueId)) RH.openVenue(b5.venueId, 'U03'); else RH.router.navigate('U02');
-          e.stopPropagation(); return;
-        }
-        if ((sel = e.target.closest('[data-requests]'))) {
-          openRequestsModal(findBooking(sel.getAttribute('data-requests')));
-          e.stopPropagation(); return;
-        }
-        if ((sel = e.target.closest('[data-addons]'))) {
-          openAddonsModal(findBooking(sel.getAttribute('data-addons')));
-          e.stopPropagation(); return;
-        }
-        if ((sel = e.target.closest('[data-split]'))) {
-          openSplitModal(findBooking(sel.getAttribute('data-split')));
-          e.stopPropagation(); return;
-        }
-        if ((sel = e.target.closest('[data-contact]'))) {
-          openContactModal(findBooking(sel.getAttribute('data-contact')));
-          e.stopPropagation(); return;
-        }
-      }
-
-      function patchBooking(id, patch) {
-        var bookings = store.get('bookings').map(function (b) {
-          return b.id === id ? Object.assign({}, b, patch) : b;
-        });
-        store.patch({ bookings: bookings });
-        paintMetrics(); paintList();
-      }
-      function updateBooking(updated) {
-        patchBooking(updated.id, updated);
-        RH.toast('Booking for ' + updated.venueName + ' successfully updated!');
-      }
-
-      /* Special Requests modal */
-      function openRequestsModal(b) {
-        if (!b) return;
-        var occOpts = RH.OCCASIONS.map(function (o) {
-          return '<option' + ((b.occasion || 'Casual Dining') === o ? ' selected' : '') + '>' + o + '</option>';
-        }).join('');
-        var diets = RH.DIETARY_OPTIONS.map(function (d) {
-          var on = (b.dietaryRestrictions || []).indexOf(d) !== -1;
-          return '<button type="button" class="diet-chip' + (on ? ' is-active' : '') + '" data-diet="' + d + '">' + (on ? '✓ ' : '+ ') + d + '</button>';
-        }).join('');
-        RH.openModal(
-          '<div class="modal-head"><div><h3>Special Requests &amp; Dietary</h3><p class="small t-muted">' + b.venueName + '</p></div>' +
-          '<button class="modal-close" data-modal-close>' + RH.icon('x', 'icon-lg') + '</button></div>' +
-          '<form class="modal-body" id="req-form">' +
-            '<div class="field"><label>Dining Occasion</label><select id="rq-occ" class="select">' + occOpts + '</select></div>' +
-            '<div class="field"><label>Dietary Restrictions &amp; Allergies</label><div style="display:flex;flex-wrap:wrap;gap:6px;" id="rq-diets">' + diets + '</div></div>' +
-            '<div class="field"><label>Notes for Maître d\' &amp; Executive Chef</label>' +
-              '<textarea id="rq-notes" class="textarea" rows="3" placeholder="e.g. Quiet corner table requested, anniversary candle on dessert...">' + (b.specialRequests || '') + '</textarea></div>' +
-            '<div class="modal-foot"><button type="button" class="btn btn-ghost" data-modal-close>Cancel</button>' +
-            '<button type="submit" class="btn btn-primary">Update Requests</button></div>' +
-          '</form>'
-        );
-        var picked = (b.dietaryRestrictions || []).slice();
-        document.getElementById('rq-diets').addEventListener('click', function (e) {
-          var chip = e.target.closest('[data-diet]');
-          if (!chip) return;
-          var d = chip.getAttribute('data-diet');
-          var i = picked.indexOf(d);
-          if (i === -1) { picked.push(d); chip.classList.add('is-active'); chip.textContent = '✓ ' + d; }
-          else { picked.splice(i, 1); chip.classList.remove('is-active'); chip.textContent = '+ ' + d; }
-        });
-        document.getElementById('req-form').addEventListener('submit', function (ev) {
-          ev.preventDefault();
-          updateBooking(Object.assign({}, b, {
-            occasion: document.getElementById('rq-occ').value,
-            specialRequests: document.getElementById('rq-notes').value,
-            dietaryRestrictions: picked
-          }));
-          RH.toast('Special requests & preferences updated for kitchen & host.');
-          RH.closeActiveModal();
-        });
-      }
-
-      /* Addons modal */
-      function openAddonsModal(b) {
-        if (!b) return;
-        var draft = {};
-        (b.preOrderedAddons || []).forEach(function (a) { draft[a.id] = a.quantity; });
-
-        function addonRow(a) {
-          var qty = draft[a.id] || 0;
-          return (
-            '<div class="addon-row" data-addon="' + a.id + '">' +
-              '<div style="display:flex;align-items:center;gap:12px;">' +
-                '<span style="font-size:24px;">' + a.icon + '</span>' +
-                '<div><strong class="tiny" style="display:block;color:#334155;">' + a.name + '</strong>' +
-                '<p class="micro t-muted">' + a.desc + '</p>' +
-                '<strong class="tiny t-burgundy">+$' + a.price + '</strong></div>' +
+            /* Notifications */
+            '<button class="profile-menu-item" id="p-notif">' +
+              '<div class="pmi-left">' +
+                '<div class="pmi-icon-wrap">' + RH.icon('bell', 'icon-md') + '</div>' +
+                '<div class="pmi-texts">' +
+                  '<span class="pmi-title">Notifications</span>' +
+                  '<span class="pmi-sub">3 unread updates</span>' +
+                '</div>' +
               '</div>' +
-              '<div>' + (qty > 0
-                ? '<div class="qty-box"><button type="button" class="q-minus" data-delta="-1">' + RH.icon('minus', 'icon-sm') + '</button>' +
-                  '<strong class="tiny" data-qty>' + qty + '</strong>' +
-                  '<button type="button" class="q-plus" data-delta="1">' + RH.icon('plus', 'icon-sm') + '</button></div>'
-                : '<button type="button" class="btn btn-ghost btn-sm" data-delta="1">' + RH.icon('plus', 'icon-sm') + ' Add</button>') + '</div>' +
-            '</div>'
-          );
-        }
-        function subtotalHtml() {
-          var sum = 0;
-          Object.keys(draft).forEach(function (id) {
-            var a = RH.AVAILABLE_ADDONS.filter(function (x) { return x.id === id; })[0];
-            if (a) sum += a.price * draft[id];
-          });
-          return sum;
-        }
+              '<div class="pmi-arrow">' + RH.icon('chevron-right', 'icon-md') + '</div>' +
+            '</button>' +
 
-        RH.openModal(
-          '<div class="modal-head"><div>' +
-            '<div class="spot-label" style="color:var(--burgundy);display:flex;gap:5px;align-items:center;">' + RH.icon('sparkles', 'icon-sm') + 'Table Experience Add-ons</div>' +
-            '<h3>Pre-Order Food &amp; Amenities</h3></div>' +
-          '<button class="modal-close" data-modal-close>' + RH.icon('x', 'icon-lg') + '</button></div>' +
-          '<div class="modal-body wide" style="max-height:56vh;overflow-y:auto;">' +
-            '<p class="tiny t-muted">Items pre-ordered here will be billed to your table and prepared by the sommelier and kitchen prior to your arrival.</p>' +
-            '<div class="stack" style="gap:10px;" id="addons-list">' +
-              RH.AVAILABLE_ADDONS.map(addonRow).join('') + '</div>' +
+            /* Payment Methods */
+            '<button class="profile-menu-item" id="p-payment">' +
+              '<div class="pmi-left">' +
+                '<div class="pmi-icon-wrap">' + RH.icon('credit-card', 'icon-md') + '</div>' +
+                '<div class="pmi-texts">' +
+                  '<span class="pmi-title">Payment Methods</span>' +
+                  '<span class="pmi-sub">Cards and billing info</span>' +
+                '</div>' +
+              '</div>' +
+              '<div class="pmi-arrow">' + RH.icon('chevron-right', 'icon-md') + '</div>' +
+            '</button>' +
+
+            /* Personal Information */
+            '<button class="profile-menu-item" id="p-personal">' +
+              '<div class="pmi-left">' +
+                '<div class="pmi-icon-wrap">' + RH.icon('user', 'icon-md') + '</div>' +
+                '<div class="pmi-texts">' +
+                  '<span class="pmi-title">Personal Information</span>' +
+                  '<span class="pmi-sub">Name, email, and preferences</span>' +
+                '</div>' +
+              '</div>' +
+              '<div class="pmi-arrow">' + RH.icon('chevron-right', 'icon-md') + '</div>' +
+            '</button>' +
+
+            /* Install ReserveHub App */
+            '<button class="profile-menu-item" data-pwa-install>' +
+              '<div class="pmi-left">' +
+                '<div class="pmi-icon-wrap pmi-app-icon">' + RH.icon('sparkles', 'icon-md') + '</div>' +
+                '<div class="pmi-texts">' +
+                  '<span class="pmi-title pmi-app-title">Install ReserveHub App</span>' +
+                  '<span class="pmi-sub">Add to home screen for instant offline booking</span>' +
+                '</div>' +
+              '</div>' +
+              '<div class="pmi-arrow pmi-app-arrow">' + RH.icon('chevron-right', 'icon-md') + '</div>' +
+            '</button>' +
+
+            /* Help & Support */
+            '<button class="profile-menu-item" id="p-help">' +
+              '<div class="pmi-left">' +
+                '<div class="pmi-icon-wrap">' + RH.icon('help-circle', 'icon-md') + '</div>' +
+                '<div class="pmi-texts">' +
+                  '<span class="pmi-title">Help &amp; Support</span>' +
+                  '<span class="pmi-sub">FAQs, contact and concierge</span>' +
+                '</div>' +
+              '</div>' +
+              '<div class="pmi-arrow">' + RH.icon('chevron-right', 'icon-md') + '</div>' +
+            '</button>' +
+
+            /* Log Out */
+            '<button class="profile-menu-item" id="p-logout">' +
+              '<div class="pmi-left">' +
+                '<div class="pmi-icon-wrap danger">' + RH.icon('log-out', 'icon-md') + '</div>' +
+                '<div class="pmi-texts">' +
+                  '<span class="pmi-title danger">Log Out</span>' +
+                  '<span class="pmi-sub danger">Sign out of ReserveHub</span>' +
+                '</div>' +
+              '</div>' +
+              '<div class="pmi-arrow danger">' + RH.icon('chevron-right', 'icon-md') + '</div>' +
+            '</button>' +
+
           '</div>' +
-          '<div style="background:var(--cream);border-top:1px solid rgba(212,163,115,.32);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:10px;border-radius:0 0 var(--r-2xl) var(--r-2xl);">' +
-            '<div><span class="micro t-faint bold uppercase" style="display:block;">Add-ons Subtotal</span>' +
-            '<strong style="color:var(--burgundy);font-size:16px;" id="addons-total">+$' + subtotalHtml() + '</strong></div>' +
-            '<div style="display:flex;gap:8px;"><button class="btn btn-ghost btn-sm" data-modal-close>Cancel</button>' +
-            '<button class="btn btn-primary btn-sm" id="addons-save">Confirm &amp; Save Courses</button></div>' +
-          '</div>',
-          { wide: true }
-        );
+        '</div>';
 
-        document.getElementById('addons-list').addEventListener('click', function (e) {
-          var btn = e.target.closest('[data-delta]');
-          if (!btn) return;
-          var row = btn.closest('[data-addon]');
-          var id = row.getAttribute('data-addon');
-          var delta = Number(btn.getAttribute('data-delta'));
-          draft[id] = Math.max(0, (draft[id] || 0) + delta);
-          if (draft[id] === 0) delete draft[id];
-
-          var a = RH.AVAILABLE_ADDONS.filter(function (x) { return x.id === id; })[0];
-          var holder = document.createElement('div');
-          holder.innerHTML = addonRow(a);
-          row.replaceWith(holder.firstChild);
-
-          document.getElementById('addons-total').textContent = '+$' + subtotalHtml();
-        });
-
-        document.getElementById('addons-save').addEventListener('click', function () {
-          var oldTotal = (b.preOrderedAddons || []).reduce(function (s, a) { return s + a.price * a.quantity; }, 0);
-          var newAddons = Object.keys(draft).map(function (id) {
-            var a = RH.AVAILABLE_ADDONS.filter(function (x) { return x.id === id; })[0];
-            return { id: id, name: a.name, price: a.price, quantity: draft[id] };
-          });
-          var newSum = newAddons.reduce(function (s, a) { return s + a.price * a.quantity; }, 0);
-          updateBooking(Object.assign({}, b, {
-            preOrderedAddons: newAddons,
-            totalPaid: b.totalPaid - oldTotal + newSum
-          }));
-          RH.toast('Pre-ordered courses & amenities updated successfully!');
-          RH.closeActiveModal();
-        });
+      /* ---------------- My Bookings Management Dialog ---------------- */
+      function openBookingsModal() {
+        RH.openBookingsModal();
       }
 
-      /* Split bill modal */
       function openSplitModal(b) {
         if (!b) return;
         var guests = b.guests || 2;
@@ -533,7 +208,6 @@
         });
       }
 
-      /* Contact venue modal */
       function openContactModal(b) {
         if (!b) return;
         RH.openModal(
@@ -557,6 +231,167 @@
           RH.toast('Phone number copied to clipboard!');
         });
       }
+
+      /* ---------------- Action Bindings ---------------- */
+      var bookingsBtn = document.getElementById('p-bookings');
+      if (bookingsBtn) bookingsBtn.addEventListener('click', RH.openBookingsModal);
+
+      // Auto-open bookings modal if navigating from My Bookings header link
+      if (params && (params.tab === 'bookings' || params.openBookings)) {
+        setTimeout(RH.openBookingsModal, 50);
+      }
+
+      /* Notifications Modal */
+      var notifBtn = document.getElementById('p-notif');
+      if (notifBtn) {
+        notifBtn.addEventListener('click', function () {
+          RH.openModal(
+            '<div class="modal-head">' +
+              '<div>' +
+                '<span class="badge">' + RH.icon('bell', 'icon-sm') + 'Activity &amp; Alerts</span>' +
+                '<h3 style="margin-top:6px;">Notifications</h3>' +
+              '</div>' +
+              '<button class="modal-close" data-modal-close aria-label="Close">' + RH.icon('x') + '</button>' +
+            '</div>' +
+            '<div class="modal-body" style="display:grid;gap:12px;">' +
+              '<div style="background:var(--cream);border:1px solid rgba(212,163,115,.3);border-radius:12px;padding:12px;display:flex;gap:10px;">' +
+                '<span style="color:#059669;font-size:18px;">✅</span>' +
+                '<div><strong style="font-size:13px;color:var(--ink);">Table Confirmed at Lakeview Terrace</strong><p class="tiny t-muted" style="margin-top:2px;">Your table for 2 on Aug 25 at 07:30 PM is confirmed with Lakefront VIP seating.</p><span class="micro t-faint">2 hours ago</span></div>' +
+              '</div>' +
+              '<div style="background:var(--cream);border:1px solid rgba(212,163,115,.3);border-radius:12px;padding:12px;display:flex;gap:10px;">' +
+                '<span style="color:#D97706;font-size:18px;">✨</span>' +
+                '<div><strong style="font-size:13px;color:var(--ink);">20% Dining Privilege Applied</strong><p class="tiny t-muted" style="margin-top:2px;">Special promo code LUNCH20 is ready on your account for lunch reservations.</p><span class="micro t-faint">Yesterday</span></div>' +
+              '</div>' +
+              '<div style="background:var(--cream);border:1px solid rgba(212,163,115,.3);border-radius:12px;padding:12px;display:flex;gap:10px;">' +
+                '<span style="color:var(--burgundy);font-size:18px;">🍾</span>' +
+                '<div><strong style="font-size:13px;color:var(--ink);">New Seasonal Menu at Seeds</strong><p class="tiny t-muted" style="margin-top:2px;">Exclusive 5-course degustation now open for ReserveHub members.</p><span class="micro t-faint">3 days ago</span></div>' +
+              '</div>' +
+            '</div>' +
+            '<div class="modal-foot">' +
+              '<button class="btn btn-ghost" data-modal-close>Close</button>' +
+              '<button class="btn btn-primary btn-sm" id="notif-mark-read">Mark All as Read</button>' +
+            '</div>'
+          );
+          var markBtn = document.getElementById('notif-mark-read');
+          if (markBtn) {
+            markBtn.addEventListener('click', function () {
+              RH.toast('All notifications marked as read');
+              if (RH._activeModalClose) RH._activeModalClose();
+            });
+          }
+        });
+      }
+
+      /* Payment Methods Modal */
+      var payBtn = document.getElementById('p-payment');
+      if (payBtn) {
+        payBtn.addEventListener('click', function () {
+          RH.openModal(
+            '<div class="modal-head">' +
+              '<div>' +
+                '<span class="badge">' + RH.icon('credit-card', 'icon-sm') + 'Billing &amp; Wallets</span>' +
+                '<h3 style="margin-top:6px;">Payment Methods</h3>' +
+              '</div>' +
+              '<button class="modal-close" data-modal-close aria-label="Close">' + RH.icon('x') + '</button>' +
+            '</div>' +
+            '<div class="modal-body" style="display:grid;gap:12px;">' +
+              '<div style="background:#fff;border:2px solid var(--burgundy);border-radius:12px;padding:14px;display:flex;align-items:center;justify-content:space-between;">' +
+                '<div style="display:flex;align-items:center;gap:12px;">' +
+                  '<div style="width:42px;height:28px;background:#1E293B;color:#fff;border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:11px;letter-spacing:1px;">VISA</div>' +
+                  '<div><strong style="font-size:14px;color:var(--ink);">Visa ending in 8842</strong><p class="micro t-muted">Expires 09/28 · Primary default</p></div>' +
+                '</div>' +
+                '<span class="badge" style="background:#059669;color:#fff;border:none;">Default</span>' +
+              '</div>' +
+              '<div style="background:var(--cream);border:1px solid rgba(212,163,115,.3);border-radius:12px;padding:14px;display:flex;align-items:center;justify-content:space-between;">' +
+                '<div style="display:flex;align-items:center;gap:12px;">' +
+                  '<div style="width:42px;height:28px;background:#005BBB;color:#fff;border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:10px;">KBZ</div>' +
+                  '<div><strong style="font-size:14px;color:var(--ink);">KBZPay QuickPay</strong><p class="micro t-muted">Connected · +959 799 *** 888</p></div>' +
+                '</div>' +
+                '<button class="btn btn-ghost btn-sm" style="font-size:11px;">Manage</button>' +
+              '</div>' +
+            '</div>' +
+            '<div class="modal-foot">' +
+              '<button class="btn btn-ghost" data-modal-close>Close</button>' +
+              '<button class="btn btn-primary btn-sm" id="pay-add-btn">' + RH.icon('plus', 'icon-sm') + ' Add New Card</button>' +
+            '</div>'
+          );
+          var addCard = document.getElementById('pay-add-btn');
+          if (addCard) {
+            addCard.addEventListener('click', function () {
+              RH.toast('Add payment method form is in demo mode');
+            });
+          }
+        });
+      }
+
+      /* Personal Information & Account Settings */
+      var infoBtn = document.getElementById('p-personal');
+      if (infoBtn) {
+        infoBtn.addEventListener('click', function () {
+          RH.router.navigate('U20', { tab: 'profile' });
+        });
+      }
+
+      /* Help & Support Modal */
+      var helpBtn = document.getElementById('p-help');
+      if (helpBtn) {
+        helpBtn.addEventListener('click', function () {
+          RH.openModal(
+            '<div class="modal-head">' +
+              '<div>' +
+                '<span class="badge">' + RH.icon('help-circle', 'icon-sm') + '24/7 Concierge Service</span>' +
+                '<h3 style="margin-top:6px;">Help &amp; Support</h3>' +
+              '</div>' +
+              '<button class="modal-close" data-modal-close aria-label="Close">' + RH.icon('x') + '</button>' +
+            '</div>' +
+            '<div class="modal-body" style="display:grid;gap:12px;">' +
+              '<div style="background:var(--cream);border:1px solid rgba(212,163,115,.3);border-radius:12px;padding:14px;display:flex;align-items:center;gap:12px;">' +
+                '<div style="width:38px;height:38px;background:#fff;border:1px solid rgba(212,163,115,.4);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--burgundy);">' + RH.icon('phone', 'icon-md') + '</div>' +
+                '<div><strong style="font-size:14px;color:var(--ink);">VIP Concierge Desk</strong><p class="micro t-muted">+959 123 456 789 (Daily 08:30 AM – 10:00 PM)</p></div>' +
+              '</div>' +
+              '<div style="background:var(--cream);border:1px solid rgba(212,163,115,.3);border-radius:12px;padding:14px;display:flex;align-items:center;gap:12px;">' +
+                '<div style="width:38px;height:38px;background:#fff;border:1px solid rgba(212,163,115,.4);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--burgundy);">' + RH.icon('mail', 'icon-md') + '</div>' +
+                '<div><strong style="font-size:14px;color:var(--ink);">Email Support</strong><p class="micro t-muted">concierge@reservehub.com (Avg response: 15 mins)</p></div>' +
+              '</div>' +
+            '</div>' +
+            '<div class="modal-foot">' +
+              '<button class="btn btn-primary btn-sm" data-modal-close style="width:100%;">Close Support Desk</button>' +
+            '</div>'
+          );
+        });
+      }
+
+      /* Log Out Action */
+      var logoutBtn = document.getElementById('p-logout');
+      if (logoutBtn) {
+        logoutBtn.addEventListener('click', function () {
+          RH.openModal(
+            '<div class="modal-head">' +
+              '<div>' +
+                '<span class="badge" style="background:#FFF1F2;color:#E11D48;border-color:#FECDD3;">' + RH.icon('log-out', 'icon-sm') + 'Account Session</span>' +
+                '<h3 style="margin-top:6px;">Sign out of ReserveHub?</h3>' +
+              '</div>' +
+              '<button class="modal-close" data-modal-close aria-label="Close">' + RH.icon('x') + '</button>' +
+            '</div>' +
+            '<div class="modal-body">' +
+              '<p class="small t-muted">You will be logged out of your session on this browser. You can sign back in anytime to access your confirmed table reservations and saved venues.</p>' +
+            '</div>' +
+            '<div class="modal-foot">' +
+              '<button class="btn btn-ghost" data-modal-close>Cancel</button>' +
+              '<button class="btn btn-danger-outline btn-sm" id="confirm-logout-btn">Log Out</button>' +
+            '</div>'
+          );
+          var confirmLogout = document.getElementById('confirm-logout-btn');
+          if (confirmLogout) {
+            confirmLogout.addEventListener('click', function () {
+              if (RH._activeModalClose) RH._activeModalClose();
+              RH.toast('Signed out of ReserveHub');
+              RH.router.navigate('U01');
+            });
+          }
+        });
+      }
     }
   });
 })(window.RH = window.RH || {});
+

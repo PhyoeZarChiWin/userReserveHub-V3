@@ -17,8 +17,26 @@
     outletId: 'view',
 
     current: function () {
-      var h = location.hash.replace(/^#\/?/, '');
-      return routes[h] ? h : 'U01';
+      var raw = location.hash.replace(/^#\/?/, '');
+      var parts = raw.split('?');
+      var id = parts[0] || 'U01';
+      return routes[id] ? id : 'U01';
+    },
+
+    parseHashParams: function () {
+      var raw = location.hash.replace(/^#\/?/, '');
+      var qIdx = raw.indexOf('?');
+      if (qIdx === -1) return {};
+      var qs = raw.slice(qIdx + 1);
+      var params = {};
+      qs.split('&').forEach(function (pair) {
+        if (!pair) return;
+        var kv = pair.split('=');
+        var k = decodeURIComponent(kv[0]);
+        var v = decodeURIComponent(kv[1] || '');
+        params[k] = v;
+      });
+      return params;
     },
 
     params: function () {
@@ -69,9 +87,17 @@
       window.addEventListener('hashchange', function () {
         /* Back/forward navigation: render unless the hash change was ours */
         if (suppressHash) { suppressHash = false; return; }
+        var hp = RH.router.parseHashParams();
+        if (Object.keys(hp).length > 0) {
+          RH.store.patch({ params: Object.assign({}, RH.store.get('params') || {}, hp) });
+        }
         RH.router.render(RH.router.current());
       });
       var initial = RH.router.current();
+      var initHp = RH.router.parseHashParams();
+      if (Object.keys(initHp).length > 0) {
+        RH.store.patch({ params: Object.assign({}, RH.store.get('params') || {}, initHp) });
+      }
       if (!location.hash) {
         suppressHash = true;
         location.hash = '#/' + initial;

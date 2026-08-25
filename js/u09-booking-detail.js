@@ -4,11 +4,13 @@
 
   RH.registerScreen('U09', {
     title: 'Booking Details',
-    render: function (root) {
+    render: function (root, params) {
       var store = RH.store;
-      var booking = store.get('bookings').filter(function (b) {
-        return b.id === store.get('selectedBookingId');
-      })[0] || null;
+      var targetId = (params && params.id) || store.get('selectedBookingId') || store.get('latestBookingId');
+      var bookings = store.get('bookings') || [];
+      var booking = bookings.filter(function (b) {
+        return b.id === targetId;
+      })[0] || bookings[0] || null;
 
       if (!booking) {
         root.innerHTML =
