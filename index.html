@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
+  <title>ReserveHub — Restaurant Discovery & Booking</title>
+  <meta name="description" content="Discover & book premier dining, chef signature tasting menus, and luxury tables across Yangon." />
+  
+  <!-- PWA & Mobile Web App Meta -->
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#1F0B10" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="ReserveHub" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="format-detection" content="telephone=no" />
+  <meta name="application-name" content="ReserveHub" />
+  <meta name="msapplication-TileColor" content="#1F0B10" />
+
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231F0B10'/%3E%3Ctext x='32' y='44' font-size='34' font-weight='900' font-family='Arial' fill='%23D4A373' text-anchor='middle'%3ER%3C/text%3E%3C/svg%3E" />
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='42' fill='%231F0B10'/%3E%3Cpath d='M68 54h36c18 0 30 10 30 25 0 12-8 21-20 24l22 39H114L94 104H84v39H68V54zm16 36h18c8 0 14-4 14-11s-6-11-14-11H84v22z' fill='%23D4A373'/%3E%3C/svg%3E" />
+
+  <!-- Styles: tokens → base → layout → components → screens -->
+  <link rel="stylesheet" href="css/variables.css" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/screens.css" />
+</head>
+<body>
+
+  <!-- Sticky header (announcement bar + main nav) -->
+  <header class="app-header" id="navbar"></header>
+
+  <!-- Active screen outlet -->
+  <main class="main-outlet" id="view" aria-live="polite"></main>
+
+  <!-- Footer -->
+  <div id="footer"></div>
+
+  <!-- Mobile / tablet bottom tab bar -->
+  <nav class="bottom-tabs" id="bottom-tabs" aria-label="Primary mobile navigation"></nav>
+
+  <!-- Toast notifications -->
+  <div class="toast-root" id="toast-root"></div>
+
+  <!-- Data layer -->
+  <script src="data/images.js"></script>
+  <script src="data/constants.js"></script>
+  <script src="data/discovery.js"></script>
+  <script src="data/venues.js"></script>
+  <script src="data/bookings.js"></script>
+
+  <!-- Shared components -->
+  <script src="components/icons.js"></script>
+  <script src="components/dialogs.js"></script>
+  <script src="components/chrome.js"></script>
+
+  <!-- State manager & router -->
+  <script src="js/state.js"></script>
+  <script src="js/router.js"></script>
+
+  <!-- Screens U01–U10 -->
+  <script src="js/u01-home.js"></script>
+  <script src="js/u02-search.js"></script>
+  <script src="js/u03-shop-detail.js"></script>
+  <script src="js/u04-calendar.js"></script>
+  <script src="js/u05-booking-input.js"></script>
+  <script src="js/u06-booking-confirm.js"></script>
+  <script src="js/u07-booking-complete.js"></script>
+  <script src="js/u08-mypage.js"></script>
+  <script src="js/u09-booking-detail.js"></script>
+  <script src="js/u10-profile.js"></script>
+
+  <!-- Bootstrap last -->
+  <script src="js/app.js"></script>
+</body>
+</html>
