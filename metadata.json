@@ -1,0 +1,8 @@
+{
+  "name": "ReserveHub",
+  "description": "Restaurant Discovery & Booking Prototype",
+  "permissions": [],
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
