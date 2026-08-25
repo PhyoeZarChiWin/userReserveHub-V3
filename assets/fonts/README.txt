@@ -1,0 +1,1 @@
+No webfont files required: the prototype uses an offline-safe system font stack declared in css/variables.css (--font-sans). Drop self-hosted .woff2 files here and register them in css/variables.css via @font-face if a custom brand font is ever needed.
